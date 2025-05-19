@@ -1,7 +1,7 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import InputField from "../components/InputField"
 import { CheckCircle, Edit, Trash2 } from "lucide-react"
-import { mockClientes, Cliente } from "../mocks/mockClientes"
+import { supabase } from "../lib/supabase"
 
 interface Cliente {
   id: string
@@ -11,19 +11,28 @@ interface Cliente {
 }
 
 const ClientesPage: React.FC = () => {
-  const [clientes, setClientes] = useState<Cliente[]>(mockClientes)
+  const [clientes, setClientes] = useState<Cliente[]>([])
   const [form, setForm] = useState({ nome: "", endereco: "", telefone: "" })
   const [errors, setErrors] = useState<{ [key: string]: string }>({})
   const [success, setSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [editIndex, setEditIndex] = useState<number | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchClientes = async () => {
+      const { data, error } = await supabase.from("clientes").select("*").order("created_at", { ascending: false })
+      if (!error) setClientes(data || [])
+    }
+    fetchClientes()
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value })
     setErrors({ ...errors, [e.target.name]: "" })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: { [key: string]: string } = {}
     if (!form.nome.trim()) newErrors.nome = "Nome é obrigatório"
@@ -36,32 +45,38 @@ const ClientesPage: React.FC = () => {
       return
     }
     setIsSubmitting(true)
-    setTimeout(() => {
-      if (editIndex !== null) {
-        const updated = [...clientes]
-        updated[editIndex] = { ...updated[editIndex], ...form }
-        setClientes(updated)
-        setEditIndex(null)
+    try {
+      if (editId) {
+        // Atualizar cliente existente
+        const { error } = await supabase
+          .from("clientes")
+          .update(form)
+          .eq("id", editId)
+        if (error) throw error
       } else {
-        setClientes([
-          ...clientes,
-          {
-            id: (clientes.length + 1).toString(),
-            nome: form.nome,
-            endereco: form.endereco,
-            telefone: form.telefone
-          }
-        ])
+        // Criar novo cliente
+        const { error } = await supabase
+          .from("clientes")
+          .insert([{ ...form }])
+        if (error) throw error
       }
+      // Atualiza lista
+      const { data, error: fetchError } = await supabase.from("clientes").select("*").order("created_at", { ascending: false })
+      if (!fetchError) setClientes(data || [])
       setForm({ nome: "", endereco: "", telefone: "" })
       setSuccess(true)
-      setIsSubmitting(false)
+      setEditId(null)
+      setEditIndex(null)
       setTimeout(() => setSuccess(false), 2000)
-    }, 800)
+    } catch (err) {
+      alert("Erro ao salvar cliente.")
+    }
+    setIsSubmitting(false)
   }
 
   const handleEdit = (idx: number) => {
     setEditIndex(idx)
+    setEditId(clientes[idx].id)
     setForm({
       nome: clientes[idx].nome,
       endereco: clientes[idx].endereco,
@@ -70,9 +85,13 @@ const ClientesPage: React.FC = () => {
     setErrors({})
   }
 
-  const handleDelete = (idx: number) => {
+  const handleDelete = async (idx: number) => {
     if (window.confirm("Deseja realmente excluir este cliente?")) {
-      setClientes(clientes.filter((_, i) => i !== idx))
+      const id = clientes[idx].id
+      const { error } = await supabase.from("clientes").delete().eq("id", id)
+      if (!error) {
+        setClientes(clientes.filter((_, i) => i !== idx))
+      }
     }
   }
 

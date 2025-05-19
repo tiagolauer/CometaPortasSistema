@@ -1,14 +1,14 @@
 import React from "react"
 import { BrowserRouter } from "react-router-dom"
-import { AuthProvider } from "./contexts/AuthContext"
 import AppRoutes from "./routes/AppRoutes"
+import { AuthProvider } from "./contexts/AuthContext"
 
 const App = () => (
-  <BrowserRouter>
-    <AuthProvider>
+  <AuthProvider>
+    <BrowserRouter>
       <AppRoutes />
-    </AuthProvider>
-  </BrowserRouter>
+    </BrowserRouter>
+  </AuthProvider>
 )
 
 export default App

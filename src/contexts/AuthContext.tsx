@@ -66,20 +66,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setProfile(data)
       setIsAdmin(data?.roles?.name === "admin")
-    } catch (error) {
-      console.error("Erro ao buscar o perfil:", error)
-    } finally {
-      setIsLoading(false)
+    } catch (error: any) {
+      console.error("Erro ao buscar o perfil:", error?.message || String(error))
+      setProfile(null)
+      setIsAdmin(false)
     }
   }
 
   useEffect(() => {
+    let isMounted = true
+    setIsLoading(true)
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!isMounted) return
       const currentUser = session?.user ?? null
       setUser(currentUser)
 
       if (currentUser) {
-        fetchProfile(currentUser.id)
+        fetchProfile(currentUser.id).finally(() => {
+          if (isMounted) setIsLoading(false)
+        })
       } else {
         setProfile(null)
         setIsAdmin(false)
@@ -90,6 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!isMounted) return
       const currentUser = session?.user ?? null
       setUser(currentUser)
 
@@ -98,11 +104,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         setProfile(null)
         setIsAdmin(false)
-        setIsLoading(false)
       }
+      setIsLoading(false)
     })
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
   }, [])

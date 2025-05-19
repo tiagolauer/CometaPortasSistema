@@ -51,7 +51,9 @@ const HistoricoPage: React.FC = () => {
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Histórico de Vendas</h1>
+        <h1 className="text-2xl font-bold text-gray-900">
+          Histórico de Vendas
+        </h1>
       </div>
       <div className="bg-white rounded-lg shadow">
         <div className="overflow-x-auto">
@@ -104,7 +106,9 @@ const HistoricoPage: React.FC = () => {
                     }).format(order.total_price)}
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass()}`}>
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass()}`}
+                    >
                       {getStatusText()}
                     </span>
                   </td>
@@ -121,57 +125,100 @@ const HistoricoPage: React.FC = () => {
         </div>
       </div>
       {isModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="relative bg-white rounded-lg shadow-lg p-8 min-w-[340px] max-w-[90vw] border border-blue-200">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl border border-gray-200 relative">
             <button
-              className="absolute top-3 right-3 text-blue-600 hover:text-red-500 transition-colors text-2xl font-bold"
+              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
               onClick={closeModal}
               aria-label="Fechar"
               title="Fechar"
             >
-              ×
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
-            <h2 className="text-2xl font-bold text-blue-700 mb-6 text-center">Detalhes do Pedido</h2>
-            <div className="mb-3 flex items-center">
-              <span className="font-semibold text-gray-700 w-28">Cliente:</span>
-              <span className="text-gray-900">{selectedOrder.customer_name}</span>
+            <h2 className="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2">
+              <svg
+                className="w-7 h-7 text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7M16 3v4M8 3v4m-5 4h18"
+                />
+              </svg>
+              Detalhes do Pedido
+            </h2>
+            <div className="space-y-3 mb-6">
+              <div>
+                <span className="font-semibold text-gray-700">Cliente:</span>{" "}
+                {selectedOrder.customer_name}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Produto:</span>{" "}
+                {selectedOrder.product}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Quantidade:</span>{" "}
+                {selectedOrder.quantity}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">
+                  Valor Total:
+                </span>{" "}
+                <span className="text-green-700 font-semibold">
+                  {new Intl.NumberFormat("pt-BR", {
+                    style: "currency",
+                    currency: "BRL"
+                  }).format(selectedOrder.total_price)}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Pago:</span>
+                <span
+                  className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                    selectedOrder.paid
+                      ? "bg-green-100 text-green-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {selectedOrder.paid ? "Sim" : "Não"}
+                </span>
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Data:</span>{" "}
+                {new Date(selectedOrder.created_at).toLocaleDateString("pt-BR")}
+              </div>
+              <div>
+                <span className="font-semibold text-gray-700">Status:</span>
+                <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-800">
+                  Entregue
+                </span>
+              </div>
             </div>
-            <div className="mb-3 flex items-center">
-              <span className="font-semibold text-gray-700 w-28">Produto:</span>
-              <span className="text-blue-700 font-medium">{selectedOrder.product}</span>
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition"
+                onClick={closeModal}
+              >
+                Fechar
+              </button>
             </div>
-            <div className="mb-3 flex items-center">
-              <span className="font-semibold text-gray-700 w-28">Quantidade:</span>
-              <span className="text-gray-900">{selectedOrder.quantity}</span>
-            </div>
-            <div className="mb-3 flex items-center">
-              <span className="font-semibold text-gray-700 w-28">Valor Total:</span>
-              <span className="text-green-700 font-bold">
-                {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(selectedOrder.total_price)}
-              </span>
-            </div>
-            <div className="mb-3 flex items-center">
-              <span className="font-semibold text-gray-700 w-28">Status:</span>
-              <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-800 font-semibold shadow">
-                {getStatusText()}
-              </span>
-            </div>
-            <div className="mb-3 flex items-center">
-              <span className="font-semibold text-gray-700 w-28">Pago:</span>
-              <span className={`font-bold ${selectedOrder.paid ? "text-green-600" : "text-red-600"}`}>
-                {selectedOrder.paid ? "Sim" : "Não"}
-              </span>
-            </div>
-            <div className="mb-3 flex items-center">
-              <span className="font-semibold text-gray-700 w-28">Data:</span>
-              <span className="text-gray-900">{new Date(selectedOrder.created_at).toLocaleDateString("pt-BR")}</span>
-            </div>
-            <button
-              className="mt-6 w-full py-2 rounded bg-blue-600 text-white font-bold text-lg shadow hover:bg-blue-700 transition-all"
-              onClick={closeModal}
-            >
-              Fechar
-            </button>
           </div>
         </div>
       )}
