@@ -38,29 +38,38 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
   handleSubmit,
   editingQuote,
   setIsModalOpen
-}) => (
-  <form onSubmit={handleSubmit} className="space-y-4">
-    <div className="space-y-1">
-      <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-        Tipo de Produto
-      </label>
-      <select
-        id="type"
-        name="type"
-        value={formData.type}
-        onChange={handleSelectChange}
-        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 sm:text-sm"
-        required
-      >
-        <option value="">Selecionar...</option>
-        <option value="porta_completa">Porta Completa</option>
-        <option value="folha_de_porta">Folha de Porta</option>
-        <option value="janela">Janela</option>
-      </select>
-      {errors.type && (
-        <div className="text-red-600 text-xs mt-1">{errors.type}</div>
-      )}
-    </div>
+}) => {
+  const handleSubmitChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value
+    }));
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-1">
+        <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+          Tipo de Produto
+        </label>
+        <select
+          id="type"
+          name="type"
+          value={formData.type}
+          onChange={handleSubmitChange} // Use handleSubmitChange aqui
+          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 sm:text-sm"
+          required
+        >
+          <option value="">Selecionar...</option>
+          <option value="porta_completa">Porta Completa</option>
+          <option value="folha_de_porta">Folha de Porta</option>
+          <option value="janela">Janela</option>
+        </select>
+        {errors.type && (
+          <div className="text-red-600 text-xs mt-1">{errors.type}</div>
+        )}
+      </div>
     <div className="relative">
       <InputField
         id="cliente"
@@ -192,7 +201,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
         id="status"
         name="status"
         value={formData.status}
-        onChange={handleSelectChange}
+        onChange={handleSubmitChange} // Troque handleSelectChange por handleSubmitChange
         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 sm:text-sm"
         required
       >
@@ -213,6 +222,7 @@ const QuoteForm: React.FC<QuoteFormProps> = ({
       </Button>
     </div>
   </form>
-)
+) // <-- Adicione este parêntese para fechar o return corretamente
+}
 
 export default QuoteForm

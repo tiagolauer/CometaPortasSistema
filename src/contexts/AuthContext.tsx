@@ -75,14 +75,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     let isMounted = true
-    setIsLoading(true)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!isMounted) return
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
+    const checkSession = async () => {
+      setIsLoading(true)
+      const { data, error } = await supabase.auth.getSession()
+      if (data?.session) {
+        setUser(data.session.user)
 
-      if (currentUser) {
-        fetchProfile(currentUser.id).finally(() => {
+        fetchProfile(data.session.user.id).finally(() => {
           if (isMounted) setIsLoading(false)
         })
       } else {
@@ -90,27 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsAdmin(false)
         setIsLoading(false)
       }
-    })
-
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (!isMounted) return
-      const currentUser = session?.user ?? null
-      setUser(currentUser)
-
-      if (currentUser) {
-        await fetchProfile(currentUser.id)
-      } else {
-        setProfile(null)
-        setIsAdmin(false)
-      }
-      setIsLoading(false)
-    })
-
+    }
+    checkSession()
     return () => {
       isMounted = false
-      subscription.unsubscribe()
     }
   }, [])
 

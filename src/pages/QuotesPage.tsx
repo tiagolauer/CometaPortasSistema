@@ -73,7 +73,9 @@ const QuotesPage: React.FC = () => {
       if (error) {
         console.error("Erro ao buscar orçamentos:", error)
       } else {
-        setQuotes(data || [])
+        // Filtra os orçamentos para excluir os aprovados
+        const filteredQuotes = data.filter(quote => quote.status !== "approved")
+        setQuotes(filteredQuotes || [])
       }
       setIsLoading(false)
     }
@@ -147,7 +149,7 @@ const QuotesPage: React.FC = () => {
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData(prev => {
-      const updatedForm = { ...prev, [name]: value }
+      const updatedForm = { ...prev, [name]: value === "Sim" }
       const total = calculateTotalPrice(updatedForm)
       return { ...updatedForm, total_price: total }
     })
@@ -200,13 +202,31 @@ const QuotesPage: React.FC = () => {
             frame_width: formData.frame_width
               ? Number(formData.frame_width)
               : null,
-            status: formData.status
+            status: formData.status,
+            paid: formData.paid // Atualiza o campo 'paid'
           })
           .eq("id", editingQuote.id)
 
         if (error) throw error
+
+        // Verifica se o status foi alterado para "approved"
+        if (formData.status === "approved") {
+          await supabase.from("orders").insert([
+            {
+              customer_name: formData.customer_name,
+              product: formData.type,
+              quantity: 1, // Ajuste conforme necessário
+              total_price: formData.total_price,
+              paid: false, // Ajuste conforme necessário
+              created_at: new Date().toISOString(),
+              status: "na_fila"
+            }
+          ])
+
+          // Exclui o orçamento da tabela quotes
+          await supabase.from("quotes").delete().eq("id", editingQuote.id)
+        }
       } else {
-        console.log("user?.id:", user?.id) // <-- Adicionado para depuração
         const { error } = await supabase.from("quotes").insert([
           {
             ...formData,
@@ -216,11 +236,31 @@ const QuotesPage: React.FC = () => {
               ? Number(formData.frame_width)
               : null,
             created_by: user?.id,
-            status: formData.status
+            status: formData.status,
+            paid: formData.paid // Insere o campo 'paid'
           }
         ])
 
         if (error) throw error
+
+        // Verifica se o status é "approved" ao criar um novo orçamento
+        if (formData.status === "approved") {
+          await supabase.from("orders").insert([
+            {
+              customer_name: formData.customer_name,
+              product: formData.type,
+              quantity: 1, // Ajuste conforme necessário
+              total_price: formData.total_price,
+              paid: false, // Ajuste conforme necessário
+              created_at: new Date().toISOString(),
+              status: "na_fila",
+              created_by: user?.id // Adiciona o UUID do criador
+            }
+          ])
+
+          // Exclui o orçamento da tabela quotes
+          await supabase.from("quotes").delete().eq("id", formData.id)
+        }
       }
 
       // Atualiza a lista após inserir/editar
