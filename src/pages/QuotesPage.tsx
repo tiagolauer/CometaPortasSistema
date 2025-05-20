@@ -183,12 +183,12 @@ const QuotesPage: React.FC = () => {
         .update(quoteToUpdate)
         .eq("id", editingQuote.id)
         .select();
-
+    
       if (error) {
         alert("Erro ao atualizar orçamento: " + error.message);
         return;
       }
-
+    
       // Se o orçamento foi aprovado, cria um pedido na tabela orders
       if (formData.status === "approved") {
         const orderToInsert = {
@@ -207,11 +207,14 @@ const QuotesPage: React.FC = () => {
           alert("Erro ao criar pedido: " + orderError.message);
         }
       }
-
-      // Atualiza lista local
-      setQuotes(prev =>
-        prev.map(q => (q.id === editingQuote.id ? { ...q, ...quoteToUpdate } : q))
-      );
+    
+      // Atualiza lista local buscando novamente do banco
+      const { data: updatedQuotes, error: fetchError } = await supabase
+        .from("quotes")
+        .select("*")
+        .order("created_at", { ascending: false });
+    
+      if (!fetchError) setQuotes((updatedQuotes || []).filter(q => q.status !== "approved"));
     } else {
       // Criar novo orçamento
       const quoteToInsert = {
@@ -255,7 +258,13 @@ const QuotesPage: React.FC = () => {
         }
       }
 
-      setQuotes(prev => [ ...(data || []), ...prev ]);
+      // Atualiza lista local buscando novamente do banco
+      const { data: updatedQuotes, error: fetchError } = await supabase
+        .from("quotes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!fetchError) setQuotes((updatedQuotes || []).filter(q => q.status !== "approved"));
     }
 
     setIsModalOpen(false);

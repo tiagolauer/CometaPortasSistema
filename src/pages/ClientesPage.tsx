@@ -28,8 +28,30 @@ const ClientesPage: React.FC = () => {
   }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value })
-    setErrors({ ...errors, [e.target.name]: "" })
+    let { name, value } = e.target
+    if (name === "telefone") {
+      // Remove tudo que não for número
+      value = value.replace(/\D/g, "")
+      // Aplica a máscara (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
+      if (value.length > 2) {
+        value = `(${value.slice(0, 2)}) ${value.slice(2)}`
+      }
+      if (value.length > 10) {
+        value = value.replace(
+          /^(\(\d{2}\)) (\d{5})(\d{4}).*/,
+          "$1 $2-$3"
+        )
+      } else if (value.length > 6) {
+        value = value.replace(
+          /^(\(\d{2}\)) (\d{4})(\d{0,4}).*/,
+          "$1 $2-$3"
+        )
+      }
+      // Limita a 15 caracteres
+      value = value.slice(0, 15)
+    }
+    setForm({ ...form, [name]: value })
+    setErrors({ ...errors, [name]: "" })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
