@@ -34,20 +34,11 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     // Buscar quantidade de orçamentos pendentes
     const fetchPendingQuotes = async () => {
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from("quotes")
-        .select("id", { count: "exact", head: true })
+        .select("*", { count: "exact", head: true })
         .eq("status", "pending")
-      if (!error && typeof data?.length === "number") {
-        setPendingQuotes(data.length)
-      } else if (!error && typeof data === "undefined") {
-        // Quando count: "exact" e head: true, o count vem em data.count
-        const { count } = await supabase
-          .from("quotes")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "pending")
-        setPendingQuotes(count || 0)
-      }
+      setPendingQuotes(count || 0)
     }
     fetchPendingQuotes()
   }, [])
