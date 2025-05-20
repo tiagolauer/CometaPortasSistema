@@ -1,42 +1,34 @@
 import React, { useState } from "react"
+import { useOrders, Order } from "../hooks/useOrders"
 
-interface Order {
-  id: string
-  customer_name: string
-  product: string
-  quantity: number
-  total_price: number
-  paid: boolean
-  created_at: string
+const getStatusBadgeClass = (status: string) => {
+  switch (status) {
+    case "entregue":
+      return "bg-purple-100 text-purple-800"
+    case "cancelado":
+      return "bg-red-100 text-red-800"
+    default:
+      return "bg-gray-200 text-gray-800"
+  }
 }
 
-const orders: Order[] = [
-  {
-    id: "1",
-    customer_name: "João Silva",
-    product: "Porta Completa",
-    quantity: 1,
-    total_price: 3000,
-    paid: true,
-    created_at: "2025-03-15T10:00:00Z"
-  },
-  {
-    id: "2",
-    customer_name: "Maria Santos",
-    product: "Janela",
-    quantity: 1,
-    total_price: 1200,
-    paid: false,
-    created_at: "2025-03-14T09:30:00Z"
+const getStatusText = (status: string) => {
+  const statusMap: Record<string, string> = {
+    entregue: "Entregue",
+    cancelado: "Cancelado"
   }
-]
-
-const getStatusBadgeClass = () => "bg-gray-200 text-gray-800"
-const getStatusText = () => "Entregue"
+  return statusMap[status] || "Desconhecido"
+}
 
 const HistoricoPage: React.FC = () => {
+  const { orders, loading } = useOrders()
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  // Filtra apenas pedidos entregues ou cancelados
+  const filteredOrders = orders.filter(
+    order => order.status === "entregue" || order.status === "cancelado"
+  )
 
   const handleRowClick = (order: Order) => {
     setSelectedOrder(order)
@@ -49,86 +41,99 @@ const HistoricoPage: React.FC = () => {
   }
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           Histórico de Vendas
         </h1>
       </div>
-      <div className="bg-white rounded-lg shadow">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      <div className="w-full overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cliente
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Produto
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Quantidade
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Valor Total
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Pago
+              </th>
+              <th className="px-4 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Data
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading ? (
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Produto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantidade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Valor Total
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Pago
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Data
-                </th>
+                <td colSpan={7} className="text-center py-8 text-gray-500">
+                  Carregando pedidos...
+                </td>
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map(order => (
+            ) : filteredOrders.length === 0 ? (
+              <tr>
+                <td colSpan={7} className="text-center py-8 text-gray-500">
+                  Nenhum pedido entregue ou cancelado.
+                </td>
+              </tr>
+            ) : (
+              filteredOrders.map(order => (
                 <tr
                   key={order.id}
                   className="hover:bg-gray-50 cursor-pointer"
                   onClick={() => handleRowClick(order)}
                 >
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {order.customer_name}
+                  <td className="px-4 sm:px-6 py-4 text-sm font-medium text-gray-900">
+                    <div>{order.customer_name}</div>
+                    <div className="text-xs text-gray-500">{order.address}</div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
-                    {order.product}
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-900">
+                    {order.product.replace(/_/g, " ")}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-900">
                     {order.quantity}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-900">
                     {new Intl.NumberFormat("pt-BR", {
                       style: "currency",
                       currency: "BRL"
                     }).format(order.total_price)}
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 sm:px-6 py-4">
                     <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass()}`}
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(order.status)}`}
                     >
-                      {getStatusText()}
+                      {getStatusText(order.status)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-900">
                     {order.paid ? "Sim" : "Não"}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-4 sm:px-6 py-4 text-sm text-gray-500">
                     {new Date(order.created_at).toLocaleDateString("pt-BR")}
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
       {isModalOpen && selectedOrder && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl border border-gray-200 relative">
+          <div className="bg-white rounded-2xl shadow-2xl p-4 sm:p-8 w-full max-w-2xl border border-gray-200 relative mx-2">
             <button
-              className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 text-gray-400 hover:text-gray-600 transition-colors"
               onClick={closeModal}
               aria-label="Fechar"
               title="Fechar"
@@ -171,7 +176,7 @@ const HistoricoPage: React.FC = () => {
               </div>
               <div>
                 <span className="font-semibold text-gray-700">Produto:</span>{" "}
-                {selectedOrder.product}
+                {selectedOrder.product.replace(/_/g, " ")}
               </div>
               <div>
                 <span className="font-semibold text-gray-700">Quantidade:</span>{" "}
@@ -206,8 +211,8 @@ const HistoricoPage: React.FC = () => {
               </div>
               <div>
                 <span className="font-semibold text-gray-700">Status:</span>
-                <span className="ml-2 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-200 text-gray-800">
-                  Entregue
+                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${getStatusBadgeClass(selectedOrder.status)}`}>
+                  {getStatusText(selectedOrder.status)}
                 </span>
               </div>
             </div>
